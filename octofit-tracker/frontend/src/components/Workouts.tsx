@@ -1,4 +1,9 @@
+import { getJson } from '../api/client.js';
 import { CapabilityCard } from './CapabilityCard.js';
+
+type WorkoutSuggestion = Record<string, unknown>;
+
+const loadWorkoutSuggestions = () => getJson<{ suggestions: WorkoutSuggestion[] }>('/api/workouts/suggestions/mona%40example.com').then(({ suggestions }) => suggestions);
 
 const fields = [
   { key: 'title', label: 'Workout' },
@@ -7,5 +12,5 @@ const fields = [
 ];
 
 export default function Workouts() {
-  return <CapabilityCard title="Workout suggestions" description="Recommend workouts from activity patterns." endpoint="/api/workouts/suggestions/mona%40example.com" collectionKey="suggestions" emptyMessage="No workout suggestions yet." fields={fields} />;
+  return <CapabilityCard title="Workout suggestions" description="Recommend workouts from activity patterns." load={loadWorkoutSuggestions} emptyMessage="No workout suggestions yet." fields={fields} />;
 }

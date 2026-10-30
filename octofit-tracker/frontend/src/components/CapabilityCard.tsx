@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { getJson } from '../api/client.js';
 
 type DataRecord = Record<string, unknown>;
 type State =
@@ -9,8 +8,7 @@ type State =
 type Props = {
   title: string;
   description: string;
-  endpoint: string;
-  collectionKey: string;
+  load: () => Promise<DataRecord[]>;
   emptyMessage: string;
   fields: readonly { key: string; label: string }[];
 };
@@ -25,19 +23,19 @@ function formatValue(value: unknown): string {
   return '';
 }
 
-export function CapabilityCard({ title, description, endpoint, collectionKey, emptyMessage, fields }: Props) {
+export function CapabilityCard({ title, description, load, emptyMessage, fields }: Props) {
   const [state, setState] = useState<State>({ status: 'loading' });
 
   useEffect(() => {
     let active = true;
     setState({ status: 'loading' });
 
-    getJson<unknown>(endpoint)
-      .then((response) => {
-        if (!isRecord(response) || !Array.isArray(response[collectionKey]) || !response[collectionKey].every(isRecord)) {
+    load()
+      .then((items) => {
+        if (!Array.isArray(items) || !items.every(isRecord)) {
           throw new Error('Unexpected response format');
         }
-        if (active) setState({ status: 'success', items: response[collectionKey] });
+        if (active) setState({ status: 'success', items });
       })
       .catch((error: unknown) => {
         if (active) setState({ status: 'error', message: error instanceof Error ? error.message : 'Unknown error' });
@@ -46,7 +44,7 @@ export function CapabilityCard({ title, description, endpoint, collectionKey, em
     return () => {
       active = false;
     };
-  }, [collectionKey, endpoint]);
+  }, [load]);
 
   return (
     <section className="card h-100">
